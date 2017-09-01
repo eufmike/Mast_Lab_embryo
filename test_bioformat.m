@@ -3,9 +3,10 @@
 addpath('/Applications/MATLAB_R2016a.app/toolbox/bfmatlab')
 
 % define folder path
-folder_path = '/Volumes/wuccistaff/Mike/Mast_Lab/';
-folder = 'raw_output_ometif';
-filenames = dir(folder);
+folder_path = '/Users/michaelshih/Documents/wucci_data/Mast Lab/';
+folder = 'raw_test';
+full_folder_path = fullfile(folder_path, folder); 
+filenames = dir(full_folder_path);
 
 %% load img by bio-format
 
