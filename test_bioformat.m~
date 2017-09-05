@@ -5,8 +5,8 @@ addpath('/Applications/MATLAB_R2016a.app/toolbox/bfmatlab')
 % define folder path
 folder_path = '/Users/michaelshih/Documents/wucci_data/Mast Lab/';
 input_folder = 'raw_test';
-output_folder = 'raw_test_output';
-
+full_folder_path = fullfile(folder_path, input_folder); 
+filenames = dir(full_folder_path);
 
 %% load img by bio-format
 
@@ -15,9 +15,10 @@ for n = 1:1
     n
     
     % create directory for each file
-    img_file = fullfile(folder_path, input_folder, filenames(n).name);
+    img_file = fullfile(folder_path, folder, filenames(n).name);
     disp(img_file);
    
+    
     if (exist('data') == 0) 
         
         data = bfopen(img_file); 
@@ -58,15 +59,9 @@ for n = 1:1
     img_2_crp_rt = imrotate(img_2_crp, 90, 'loose');
     img_3_crp_rt = imrotate(img_3_crp, 90, 'loose');
     
-    %% write tiff
-    
-    img_data_com_3 = cat(3, img_1_crp_rt, img_2_crp_rt, img_3_crp_rt);
-    
-    output_filename = strrep(filenames(n).name, '.ome.tiff', '.tif');
-    img_file_output = fullfile(folder_path, output_folder, output_filename);
-    disp(img_file_output);
-    writeTIFF(img_data_com_3, img_file_output);
-    
+    if (exist('img_data_com_3') == 0)
+    img_data_com_3 = {img_1_crp_rt, img_2_crp_rt, img_3_crp_rt};
+    end
     
 end
 

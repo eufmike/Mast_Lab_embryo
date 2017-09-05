@@ -1,5 +1,3 @@
-%imshow(img_1_crp_rt); 
-%colormap(mycolormap);
 
 function writeTIFF(data, filename)
     t = Tiff(filename, 'w');
