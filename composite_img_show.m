@@ -1,3 +1,5 @@
+% by Mike Shih
+
 %% use matlab display multi-channel tiff files
 % dependent: grs2rgb(); im2uint8();
 

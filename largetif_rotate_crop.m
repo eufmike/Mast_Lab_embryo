@@ -3,6 +3,7 @@ tic
 %% starting session
 % import bio-format toolbox
 addpath('/Applications/MATLAB_R2016a.app/toolbox/bfmatlab')
+addpath('/Applications/MATLAB_R2016a.app/toolbox/')
 
 % define the path of folders
 folder_path = '/Users/michaelshih/Documents/wucci_data/Mast Lab/';
@@ -45,7 +46,8 @@ for n = 3:size(filenames, 1)
         BW = imdilate(BW, se);
         %figure
         %imshow(BW);
-    end  
+    end
+    
     img_1_seg = img_1.*BW; 
     img_2_seg = img_2.*BW;
     img_3_seg = img_3.*BW;

@@ -1,3 +1,5 @@
+% by Mike Shih
+
 %% colormap generator
 
 bit = 8;
