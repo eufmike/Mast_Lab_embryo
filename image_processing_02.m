@@ -1,10 +1,7 @@
-%{
-WUCCI Mike Shih
+% By: Mike Shih
+% This is a test code for extracting the brain region from images captured by
+% Zeiss AxioScan. 
 
-This is a test code for extracting the brain region from images captured by
-Zeiss AxioScan. 
-
-%}
 %tic
 
 clear
@@ -16,8 +13,6 @@ path = '/Volumes/wuccistaff/Mike/Mast_Lab/';
 folder = 'output_tif';
 file_path = fullfile(path, folder);
 file_path
-
-
 
 %% run through image() function
 

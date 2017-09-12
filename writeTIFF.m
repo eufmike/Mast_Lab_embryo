@@ -15,6 +15,8 @@ function writeTIFF(data, filename)
     t.setTag('ImageLength', size(data, 1)); 
     t.setTag('ImageWidth', size(data, 2)); 
     
+    
+    
     % Planar Configuration
     t.setTag('PlanarConfiguration', Tiff.PlanarConfiguration.Chunky);
     
