@@ -2,9 +2,9 @@ tic
 
 %% starting session
 % define the path of folders
-folder_path = '/Volumes/wuccistaff/Mike/Mast_Lab';
-input_folder = 'raw_test_output_crop_2';
-output_folder = 'raw_test_output_resize';
+folder_path = '/Users/michaelshih/Documents/wucci_data/Mast Lab/';
+input_folder = 'raw_test_output';
+output_folder = 'tiff_BW_stat';
 input = dir(fullfile(folder_path, input_folder));
 filenames = {input.name}';
 
