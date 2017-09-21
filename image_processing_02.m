@@ -1,4 +1,4 @@
-% By: Mike Shih
+?% By: Mike Shih
 % This is a test code for extracting the brain region from images captured by
 % Zeiss AxioScan. 
 
