@@ -32,15 +32,14 @@ for n = 1:1 %n = 1:size(filenames_nodot, 1)
     
     data = bfopen(img_file);
     
-    size = [10, 10];
     img_1 = double(data{1, 1}{1, 1});
-    img_1 = padarray(img_1, size, 0, 'both');
+    img_1 = padarray(img_1, []de
     
     img_2 = double(data{1, 1}{2, 1});
-    img_2 = padarray(img_2, size, 0, 'both');
+    
     
     img_3 = double(data{1, 1}{3, 1});  
-    img_3 = padarray(img_3, size, 0, 'both');
+    
     
     %% plot image
 
