@@ -7,6 +7,7 @@
 clear
 channel_counts = 3;
 unit = round(1/3, 2);
+close all
 
 %% Define the path of folders
 folder_path = '/Users/michaelshih/Dropbox/WUCCI_dropbox/Mast_lab';
@@ -23,7 +24,9 @@ filenames_nodot = filenames(nodot); % use logicals select filenames
 
 
 %% run through image() function
-for n = 1:1 %n = 1:size(filenames_nodot, 1)
+for n = 1:1
+    
+    %n = 1:size(filenames_nodot, 1)
     %% load img through bio-format
     % create file list for each file
     img_file = fullfile(folder_path, input_folder, filenames_nodot(n));
@@ -99,27 +102,48 @@ for n = 1:1 %n = 1:size(filenames_nodot, 1)
 
     big_area = bwareafilt(edge_cleaned, 21,'largest');
     big_area = bwareafilt(big_area, 20,'smallest');
-    figure 
-    imshow(big_area);
 
 
     %% BW statistic s
-    stats = regionprops('table', big_area, 'Centroid', 'Eccentricity');
-    C = sortrows(stats, 'Eccentricity');
-    C
-    centroids = stats.Centroid; 
-    centroids
-
+    stats = regionprops('table', big_area, 'all');
+    stats.Circularity = (4*pi*stats.Area)./((stats.Perimeter).^2);
+    stats.Aspectratio = stats.MajorAxisLength./stats.MinorAxisLength; 
+    stats.Roundness = (4*stats.Area)./(pi*(stats.MajorAxisLength).^2); 
+    stats
+    
     figure 
     imshow(big_area);
-    hold on
-    scatter(centroids(:, 1), centroids(:, 2)) ;
-    hold off
-
-    BW2 = bwpropfilt(big_area,'Eccentricity',5, 'smallest');
-    figure 
+%     hold on
+%     scatter(centroids(:, 1), centroids(:, 2)) ;
+%     hold off
+    
+    stats = sortrows(stats, 'Eccentricity');
+    BW2 = bwpropfilt(big_area, 'Eccentricity', 5, 'smallest'); 
+    stats_2 = stats(1:5, :);
     imshow(BW2);
+    
+    
+    cc = bwconncomp(BW2); 
+    idx = find([stats_2.Circularity] > 0.2);
+    BW3 = ismember(labelmatrix(cc), idx);
 
+    stats_2 = stats(stats.Circularity > 0.2, :);
+    stats_2 = sortrows(stats_2, 'Circularity', 'descend');
+    
+    centroids = stats_2.Centroid; 
+    
+    figure 
+    imshow(BW3);
+    hold on
+    
+    for k= 1: height(stats_2);
+        text(centroids(k, 1), centroids(k, 2), num2str(k));
+    end
+    
+    hold off
+    
     impixelinfo;
+    
+    
     
 end
