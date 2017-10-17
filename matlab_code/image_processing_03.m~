@@ -2,11 +2,15 @@
 % This is a test code for extracting the brain region from images captured by
 % Zeiss AxioScan. 
 
+ 
 %tic
+
 clear
 channel_counts = 3;
 unit = round(1/3, 2);
 close all
+
+troubleshooting = 1;
 
 %% Define the path of folders
 folder_path = '/Users/michaelshih/Dropbox/WUCCI_dropbox/Mast_lab';
@@ -22,7 +26,7 @@ nodot = (cellfun('isempty', rxResult)==0); % convert to logicals
 filenames_nodot = filenames(nodot); % use logicals select filenames
 
 %% run through image() function
-for n = 5:5
+for n = 1:1
 %for n = 1:size(filenames_nodot, 1)  
     
     %% load img through bio-format
@@ -46,8 +50,7 @@ for n = 5:5
     %% generate a binary for the whole tissue
     img_total = (img_1+img_2+img_3)./3;
     img_total = uint16(img_total);
-    figure
-    imshow(img_total, []);
+    if troubleshooting == 1, figure; imshow(img_total, []), end
     
     BW = imbinarize(img_total, isodata(img_total)*0.3);
     BW = bwareafilt(BW, 1,'largest');   
@@ -76,19 +79,19 @@ for n = 5:5
 
     %% findedge in all three channel
 
-    edgeim_1 = edge(img_1, 'canny', [0.07, 0.1], 2);
-    pos2 = [unit unit*2 unit unit];
-    subplot('Position',pos2);
+    %edgeim_1 = edge(img_1, 'canny', [0.07, 0.1], 2);
+    %pos2 = [unit unit*2 unit unit];
+    %subplot('Position',pos2);
     %imshow(edgeim_1, [])
 
-    edgeim_2 = edge(img_2, 'canny', [0.07, 0.1], 2);
-    pos4 = [unit unit unit unit];
-    subplot('Position',pos4);
+    %edgeim_2 = edge(img_2, 'canny', [0.07, 0.1], 2);
+    %pos4 = [unit unit unit unit];
+    %subplot('Position',pos4);
     %imshow(edgeim_2, [])
 
-    edgeim_3 = edge(img_3, 'canny', [0.03, 0.1], 2);
-    pos4 = [unit 0 unit unit];
-    subplot('Position',pos4);
+    %edgeim_3 = edge(img_3, 'canny', [0.03, 0.1], 2);
+    %pos4 = [unit 0 unit unit];
+    %subplot('Position',pos4);
     %imshow(edgeim_3, [])
 
     
@@ -161,19 +164,16 @@ for n = 5:5
 
     end
 
-        bw_gray_th_3 = im2bw(bw_gray_3, 0.1);
+    bw_gray_th_3 = im2bw(bw_gray_3, 0.1);
 
-        edge_merge = bitand(bw_gray_th_2, bw_gray_th_3);
-        figure 
-        imshow(edge_merge);
+    edge_merge = bitand(bw_gray_th_2, bw_gray_th_3);
+    if troubleshooting == 1, figure; imshow(edge_merge, []), end
 
     %% clean edge
     edge_cleaned = bwareaopen(edge_merge, 500);
     edge_cleaned = imcomplement(edge_cleaned);
-    figure 
-    imshow(edge_cleaned);
-    impixelinfo;
-
+    if troubleshooting == 1, figure; imshow(edge_cleaned, []), end
+    
     %% keep biggest 20 area
     big_area = bwareafilt(edge_cleaned, 21,'largest');
     big_area = bwareafilt(big_area, 20,'smallest');
@@ -218,15 +218,15 @@ for n = 5:5
     se = strel('disk',2,0);
     BW2 = imdilate(BW2, se);
     
-    figure
-    imshow(BW2);
-    hold on
-    for k= 1: height(stats_2);
-        t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-        t.Color = 'red';
-        t.FontSize = 20;
-    end
-    hold off
+%     figure
+%     imshow(BW2);
+%     hold on
+%     for k= 1: height(stats_2);
+%         t = text(centroids(k, 1), centroids(k, 2), num2str(k));
+%         t.Color = 'red';
+%         t.FontSize = 20;
+%     end
+%     hold off
     
       
     
@@ -244,19 +244,19 @@ for n = 5:5
     stats_3 = sortrows(stats_3, 'Circularity', 'descend');
     centroids = stats_3.Centroid;
     
-    figure 
-    imshow(BW3);
-    hold on
-    
-    for k= 1: height(stats_3);
-        t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-        t.Color = 'red';
-        t.FontSize = 20;
-    end
-    
-    hold off
-    
-    impixelinfo;
+%     figure 
+%     imshow(BW3);
+%     hold on
+%     
+%     for k= 1: height(stats_3);
+%         t = text(centroids(k, 1), centroids(k, 2), num2str(k));
+%         t.Color = 'red';
+%         t.FontSize = 20;
+%     end
+%     
+%     hold off
+%     
+%     impixelinfo;
     
     %% select the region based on the midline
     stats_3.distance_mid_x = abs(stats_3.Centroid(:, 1) - mid_x);
@@ -283,26 +283,29 @@ for n = 5:5
     stats_5 = extendedproperty(BW4);
     centroids = stats_5.Centroid;
     
-        figure 
-        imshow(BW4);
-        hold on
-
-        for k= 1: height(stats_4);
-            t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-            t.Color = 'red';
-            t.FontSize = 20;
-        end
-
-        hold off
-    
-    impixelinfo;
+%     figure 
+%     imshow(BW4);
+%     hold on
+%     
+%     for k= 1: height(stats_4);
+%         t = text(centroids(k, 1), centroids(k, 2), num2str(k));
+%         t.Color = 'red';
+%         t.FontSize = 20;
+%     end
+%     
+%     hold off
     
     %% overlap
     BWoutline = bwperim(BW4);
-    Segout = img_2; 
-    Segout(BWoutline) = 65535; 
+    SegoutR = im2uint8(img_total);
+    SegoutG = im2uint8(img_total);
+    SegoutB = im2uint8(img_total);
+    SegoutR(BWoutline) = 255; 
+    SegoutG(BWoutline) = 255;
+    SegoutB(BWoutline) = 0;
+    SegoutRGB = cat(3, SegoutR, SegoutG, SegoutB);
     figure
-    imshow(Segout, []);
+    imshow(SegoutRGB, []);
     hold on
     
     for k= 1: height(stats_4);
@@ -312,4 +315,6 @@ for n = 5:5
     end
     
     hold off
+    
+    impixelinfo;
 end

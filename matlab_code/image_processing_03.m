@@ -2,11 +2,15 @@
 % This is a test code for extracting the brain region from images captured by
 % Zeiss AxioScan. 
 
+ 
 %tic
+
 clear
 channel_counts = 3;
 unit = round(1/3, 2);
 close all
+
+troubleshooting = 0;
 
 %% Define the path of folders
 folder_path = '/Users/michaelshih/Dropbox/WUCCI_dropbox/Mast_lab';
@@ -46,8 +50,7 @@ for n = 1:10
     %% generate a binary for the whole tissue
     img_total = (img_1+img_2+img_3)./3;
     img_total = uint16(img_total);
-    figure
-    imshow(img_total, []);
+    if troubleshooting == 1, figure; imshow(img_total, []), end
     
     BW = imbinarize(img_total, isodata(img_total)*0.3);
     BW = bwareafilt(BW, 1,'largest');   
@@ -164,23 +167,16 @@ for n = 1:10
     bw_gray_th_3 = im2bw(bw_gray_3, 0.1);
 
     edge_merge = bitand(bw_gray_th_2, bw_gray_th_3);
-    figure 
-    imshow(edge_merge);
+    if troubleshooting == 1, figure; imshow(edge_merge, []), end
 
     %% clean edge
     edge_cleaned = bwareaopen(edge_merge, 500);
     edge_cleaned = imcomplement(edge_cleaned);
-    figure 
-    imshow(edge_cleaned);
-    impixelinfo;
-
+    if troubleshooting == 1, figure; imshow(edge_cleaned, []), end
+    
     %% keep biggest 20 area
     big_area = bwareafilt(edge_cleaned, 21,'largest');
     big_area = bwareafilt(big_area, 20,'smallest');
-    
-    %figure 
-    %imshow(big_area);
-    %impixelinfo;
     
     big_area = imfill(big_area, 'holes');
     big_area = bwmorph(big_area,'hbreak');
@@ -197,16 +193,20 @@ for n = 1:10
     % roundness and other factors for evaluation
     stats = extendedproperty(big_area);
     centroids = stats.Centroid;
-
-    figure
-    imshow(big_area); 
-    hold on
-    for k= 1: height(stats);
-        t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-        t.Color = 'red';
-        t.FontSize = 20;
-    end
+    
+    if troubleshooting == 1 
+        figure; 
+        imshow(big_area, []) 
+         hold on
+        for k= 1: height(stats);
+            t = text(centroids(k, 1), centroids(k, 2), num2str(k));
+            t.Color = 'red';
+            t.FontSize = 20;
+        end
     hold off
+    end
+    
+   
     
     %% select based on eccentricity
     BW2 = bwpropfilt(big_area, 'Eccentricity', 5, 'smallest'); % select objects by their eccentricity
@@ -218,16 +218,17 @@ for n = 1:10
     se = strel('disk',2,0);
     BW2 = imdilate(BW2, se);
     
-%     figure
-%     imshow(BW2);
-%     hold on
-%     for k= 1: height(stats_2);
-%         t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-%         t.Color = 'red';
-%         t.FontSize = 20;
-%     end
-%     hold off
-    
+    if troubleshooting == 1 
+        figure; 
+        imshow(BW2, []) 
+         hold on
+        for k= 1: height(stats_2);
+            t = text(centroids(k, 1), centroids(k, 2), num2str(k));
+            t.Color = 'red';
+            t.FontSize = 20;
+        end
+    hold off
+    end
       
     
     %% select based on circularity
@@ -235,7 +236,7 @@ for n = 1:10
     % select the object by their circularity
     cc = bwconncomp(BW2); 
     %L = bwlabel(BW2);
-    idx = find([stats_3.Circularity] > 0.05 & [stats_3.Roundness] > 0.7);
+    idx = find([stats_3.Circularity] > 0.05 & [stats_3.Roundness] > 0.6);
     L = labelmatrix(cc);
     BW3 = ismember(L, idx);
     
@@ -244,19 +245,18 @@ for n = 1:10
     stats_3 = sortrows(stats_3, 'Circularity', 'descend');
     centroids = stats_3.Centroid;
     
-%     figure 
-%     imshow(BW3);
-%     hold on
-%     
-%     for k= 1: height(stats_3);
-%         t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-%         t.Color = 'red';
-%         t.FontSize = 20;
-%     end
-%     
-%     hold off
-%     
-%     impixelinfo;
+    if troubleshooting == 1 
+        figure; 
+        imshow(BW3, []) 
+         hold on
+        for k= 1: height(stats_3);
+            t = text(centroids(k, 1), centroids(k, 2), num2str(k));
+            t.Color = 'red';
+            t.FontSize = 20;
+        end
+    hold off
+    end
+    
     
     %% select the region based on the midline
     stats_3.distance_mid_x = abs(stats_3.Centroid(:, 1) - mid_x);
@@ -283,23 +283,23 @@ for n = 1:10
     stats_5 = extendedproperty(BW4);
     centroids = stats_5.Centroid;
     
-%     figure 
-%     imshow(BW4);
-%     hold on
-%     
-%     for k= 1: height(stats_4);
-%         t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-%         t.Color = 'red';
-%         t.FontSize = 20;
-%     end
-%     
-%     hold off
+    if troubleshooting == 1 
+        figure; 
+        imshow(BW4, []) 
+         hold on
+        for k= 1: height(stats_4);
+            t = text(centroids(k, 1), centroids(k, 2), num2str(k));
+            t.Color = 'red';
+            t.FontSize = 20;
+        end
+    hold off
+    end
     
     %% overlap
     BWoutline = bwperim(BW4);
-    SegoutR = im2uint8(uint16(img_2));
-    SegoutG = im2uint8(uint16(img_2));
-    SegoutB = im2uint8(uint16(img_2));
+    SegoutR = im2uint8(img_total);
+    SegoutG = im2uint8(img_total);
+    SegoutB = im2uint8(img_total);
     SegoutR(BWoutline) = 255; 
     SegoutG(BWoutline) = 255;
     SegoutB(BWoutline) = 0;
