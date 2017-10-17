@@ -24,7 +24,7 @@ filenames_nodot = filenames(nodot); % use logicals select filenames
 
 
 %% run through image() function
-for n = 2:2
+for n = 1:3
 %for n = 1:size(filenames_nodot, 1)  
     
     %% load img through bio-format
@@ -290,10 +290,7 @@ end
     BW4 = ismember(L, idx);
     
     BW4 = imfill(BW4, 'holes');
-    se = strel('disk',10,0);
-    BW4 = imdilate(BW4, se);
-    se = strel('disk',4,0);
-    BW4 = imerode(BW4, se);
+    
     
     stats_5 = extendedproperty(BW4);
     centroids = stats_5.Centroid;
@@ -311,20 +308,4 @@ end
     hold off
     
     impixelinfo;
-    
-    %% overlap
-    BWoutline = bwperim(BW4);
-    Segout = img_2; 
-    Segout(BWoutline) = 65535; 
-    figure
-    imshow(Segout, []);
-    hold on
-    
-    for k= 1: height(stats_4);
-        t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-        t.Color = 'red';
-        t.FontSize = 20;
-    end
-    
-    hold off
 end

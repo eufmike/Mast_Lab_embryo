@@ -3,7 +3,6 @@
 % Zeiss AxioScan. 
 
 %tic
-
 clear
 channel_counts = 3;
 unit = round(1/3, 2);
@@ -22,9 +21,8 @@ rxResult = regexp(filenames, regexp_crit); % pick the string follow the rule
 nodot = (cellfun('isempty', rxResult)==0); % convert to logicals
 filenames_nodot = filenames(nodot); % use logicals select filenames
 
-
 %% run through image() function
-for n = 2:2
+for n = 1:10
 %for n = 1:size(filenames_nodot, 1)  
     
     %% load img through bio-format
@@ -48,6 +46,8 @@ for n = 2:2
     %% generate a binary for the whole tissue
     img_total = (img_1+img_2+img_3)./3;
     img_total = uint16(img_total);
+    figure
+    imshow(img_total, []);
     
     BW = imbinarize(img_total, isodata(img_total)*0.3);
     BW = bwareafilt(BW, 1,'largest');   
@@ -55,129 +55,114 @@ for n = 2:2
     se = strel('disk',2, 0);
     BW = imdilate(BW, se);
     
-    imshow(BW);
+    %imshow(BW);
     stats_total = regionprops(BW, 'BoundingBox');
     mid_x = stats_total.BoundingBox(3)/2 + stats_total.BoundingBox(1); 
     mid_y = stats_total.BoundingBox(4)/2 + stats_total.BoundingBox(2);
     
     %% plot image
 
-    pos1 = [0 unit*2 unit unit];
-    subplot('Position',pos1)
-    imshow(img_1, []);
+    %pos1 = [0 unit*2 unit unit];
+    %subplot('Position',pos1)
+    %imshow(img_1, []);
 
-    pos3 = [0 unit unit unit];
-    subplot('Position',pos3)
-    imshow(img_2, []);
+    %pos3 = [0 unit unit unit];
+    %subplot('Position',pos3)
+    %imshow(img_2, []);
 
-    pos5 = [0 0 unit unit];
-    subplot('Position',pos5)
-    imshow(img_3, []);
+    %pos5 = [0 0 unit unit];
+    %subplot('Position',pos5)
+    %imshow(img_3, []);
 
     %% findedge in all three channel
 
-    edgeim_1 = edge(img_1, 'canny', [0.07, 0.1], 2);
-    pos2 = [unit unit*2 unit unit];
-    subplot('Position',pos2);
-    imshow(edgeim_1, [])
+    %edgeim_1 = edge(img_1, 'canny', [0.07, 0.1], 2);
+    %pos2 = [unit unit*2 unit unit];
+    %subplot('Position',pos2);
+    %imshow(edgeim_1, [])
 
-    edgeim_2 = edge(img_2, 'canny', [0.07, 0.1], 2);
-    pos4 = [unit unit unit unit];
-    subplot('Position',pos4);
-    imshow(edgeim_2, [])
+    %edgeim_2 = edge(img_2, 'canny', [0.07, 0.1], 2);
+    %pos4 = [unit unit unit unit];
+    %subplot('Position',pos4);
+    %imshow(edgeim_2, [])
 
-    edgeim_3 = edge(img_3, 'canny', [0.03, 0.1], 2);
-    pos4 = [unit 0 unit unit];
-    subplot('Position',pos4);
-    imshow(edgeim_3, [])
+    %edgeim_3 = edge(img_3, 'canny', [0.03, 0.1], 2);
+    %pos4 = [unit 0 unit unit];
+    %subplot('Position',pos4);
+    %imshow(edgeim_3, [])
 
-
-    %% find edge with sobel
-    %close all;
-    method = 'Canny';
-    fudgeFactor = 1;
-    
-    [~, threshold] = edge(img_2, method);
-    edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor);
-    figure
-    imshow(edgeim_sobel_2, []);
-    
-    [~, threshold] = edge(img_3, method);
-    edgeim_sobel_3 = edge(img_3, method, threshold * fudgeFactor);
-    figure
-    imshow(edgeim_sobel_3, []);
     
     %% binary operation for brain area (potential better strategy)
     
     bw_gray_2 = zeros(size(img_2));
-for i = 1:20
-    method = 'Canny';
-    fudgeFactor = 0.05;    
-    [~, threshold] = edge(img_2, method);
-    edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor * i);   
+    for i = 1:20
+        method = 'Canny';
+        fudgeFactor = 0.05;    
+        [~, threshold] = edge(img_2, method);
+        edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor * i);   
     
-    se = strel('disk',2,0);
-    edgeim_sobel_2 = imdilate(edgeim_sobel_2, se);
+        se = strel('disk',2,0);
+        edgeim_sobel_2 = imdilate(edgeim_sobel_2, se);
     
-    bw_gray_temp = uint8(edgeim_sobel_2);
+        bw_gray_temp = uint8(edgeim_sobel_2);
     
-    bw_gray_2 = bw_gray_temp + uint8(bw_gray_2);
+        bw_gray_2 = bw_gray_temp + uint8(bw_gray_2);
 
-end
+    end
 
 
-for i = 1:20
-    method = 'Roberts';
-    fudgeFactor = 0.05;    
-    [~, threshold] = edge(img_2, method);
-    edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor * i);   
-    
-    se = strel('disk',2,0);
-    edgeim_sobel_2 = imdilate(edgeim_sobel_2, se);
-    
-    bw_gray_temp = uint8(edgeim_sobel_2);
-    
-    bw_gray_2 = bw_gray_temp + uint8(bw_gray_2);
+    for i = 1:20
+        method = 'Roberts';
+        fudgeFactor = 0.05;    
+        [~, threshold] = edge(img_2, method);
+        edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor * i);   
 
-end
+        se = strel('disk',2,0);
+        edgeim_sobel_2 = imdilate(edgeim_sobel_2, se);
 
-bw_gray_th_2 = im2bw(bw_gray_2, 0.1);
+        bw_gray_temp = uint8(edgeim_sobel_2);
+
+        bw_gray_2 = bw_gray_temp + uint8(bw_gray_2);
+
+    end
+
+    bw_gray_th_2 = im2bw(bw_gray_2, 0.1);
 
 
     bw_gray_3 = zeros(size(img_3));
-for i = 1:20
-    method = 'Canny';
-    fudgeFactor = 0.05;    
-    [~, threshold] = edge(img_2, method);
-    edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor * i);   
-    
-    se = strel('disk',2,0);
-    edgeim_sobel_2 = imdilate(edgeim_sobel_2, se);
-    
-    bw_gray_temp = uint8(edgeim_sobel_2);
-    
-    bw_gray_3 = bw_gray_temp + uint8(bw_gray_3);
+    for i = 1:20
+        method = 'Canny';
+        fudgeFactor = 0.05;    
+        [~, threshold] = edge(img_2, method);
+        edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor * i);   
 
-end
+        se = strel('disk',2,0);
+        edgeim_sobel_2 = imdilate(edgeim_sobel_2, se);
+
+        bw_gray_temp = uint8(edgeim_sobel_2);
+
+        bw_gray_3 = bw_gray_temp + uint8(bw_gray_3);
+
+    end
 
 
-for i = 1:20
-    method = 'Roberts';
-    fudgeFactor = 0.05;    
-    [~, threshold] = edge(img_2, method);
-    edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor * i);   
-    
-    se = strel('disk',2,0);
-    edgeim_sobel_2 = imdilate(edgeim_sobel_2, se);
-    
-    bw_gray_temp = uint8(edgeim_sobel_2);
-    
-    bw_gray_3 = bw_gray_temp + uint8(bw_gray_3);
+    for i = 1:20
+        method = 'Roberts';
+        fudgeFactor = 0.05;    
+        [~, threshold] = edge(img_2, method);
+        edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor * i);   
 
-end
+        se = strel('disk',2,0);
+        edgeim_sobel_2 = imdilate(edgeim_sobel_2, se);
+
+        bw_gray_temp = uint8(edgeim_sobel_2);
+
+        bw_gray_3 = bw_gray_temp + uint8(bw_gray_3);
+
+    end
 
     bw_gray_th_3 = im2bw(bw_gray_3, 0.1);
-  
+
     edge_merge = bitand(bw_gray_th_2, bw_gray_th_3);
     figure 
     imshow(edge_merge);
@@ -193,9 +178,9 @@ end
     big_area = bwareafilt(edge_cleaned, 21,'largest');
     big_area = bwareafilt(big_area, 20,'smallest');
     
-    figure 
-    imshow(big_area);
-    impixelinfo;
+    %figure 
+    %imshow(big_area);
+    %impixelinfo;
     
     big_area = imfill(big_area, 'holes');
     big_area = bwmorph(big_area,'hbreak');
@@ -233,15 +218,15 @@ end
     se = strel('disk',2,0);
     BW2 = imdilate(BW2, se);
     
-    figure
-    imshow(BW2);
-    hold on
-    for k= 1: height(stats_2);
-        t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-        t.Color = 'red';
-        t.FontSize = 20;
-    end
-    hold off
+%     figure
+%     imshow(BW2);
+%     hold on
+%     for k= 1: height(stats_2);
+%         t = text(centroids(k, 1), centroids(k, 2), num2str(k));
+%         t.Color = 'red';
+%         t.FontSize = 20;
+%     end
+%     hold off
     
       
     
@@ -259,19 +244,19 @@ end
     stats_3 = sortrows(stats_3, 'Circularity', 'descend');
     centroids = stats_3.Centroid;
     
-    figure 
-    imshow(BW3);
-    hold on
-    
-    for k= 1: height(stats_3);
-        t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-        t.Color = 'red';
-        t.FontSize = 20;
-    end
-    
-    hold off
-    
-    impixelinfo;
+%     figure 
+%     imshow(BW3);
+%     hold on
+%     
+%     for k= 1: height(stats_3);
+%         t = text(centroids(k, 1), centroids(k, 2), num2str(k));
+%         t.Color = 'red';
+%         t.FontSize = 20;
+%     end
+%     
+%     hold off
+%     
+%     impixelinfo;
     
     %% select the region based on the midline
     stats_3.distance_mid_x = abs(stats_3.Centroid(:, 1) - mid_x);
@@ -298,8 +283,29 @@ end
     stats_5 = extendedproperty(BW4);
     centroids = stats_5.Centroid;
     
-    figure 
-    imshow(BW4);
+%     figure 
+%     imshow(BW4);
+%     hold on
+%     
+%     for k= 1: height(stats_4);
+%         t = text(centroids(k, 1), centroids(k, 2), num2str(k));
+%         t.Color = 'red';
+%         t.FontSize = 20;
+%     end
+%     
+%     hold off
+    
+    %% overlap
+    BWoutline = bwperim(BW4);
+    SegoutR = im2uint8(uint16(img_2));
+    SegoutG = im2uint8(uint16(img_2));
+    SegoutB = im2uint8(uint16(img_2));
+    SegoutR(BWoutline) = 255; 
+    SegoutG(BWoutline) = 255;
+    SegoutB(BWoutline) = 0;
+    SegoutRGB = cat(3, SegoutR, SegoutG, SegoutB);
+    figure
+    imshow(SegoutRGB, []);
     hold on
     
     for k= 1: height(stats_4);
@@ -311,20 +317,4 @@ end
     hold off
     
     impixelinfo;
-    
-    %% overlap
-    BWoutline = bwperim(BW4);
-    Segout = img_2; 
-    Segout(BWoutline) = 65535; 
-    figure
-    imshow(Segout, []);
-    hold on
-    
-    for k= 1: height(stats_4);
-        t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-        t.Color = 'red';
-        t.FontSize = 20;
-    end
-    
-    hold off
 end
