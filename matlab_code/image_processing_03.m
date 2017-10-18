@@ -8,14 +8,15 @@
 clear
 channel_counts = 3;
 unit = round(1/3, 2);
-close all
-
-troubleshooting = 0;
+troubleshooting = 1;
 
 %% Define the path of folders
 folder_path = '/Users/michaelshih/Dropbox/WUCCI_dropbox/Mast_lab';
 input_folder = 'raw_test_resized'; % specify the input folder
 output_folder = 'raw_test_output'; % specify the output folder
+bw_output_folder = 'raw_test_output_bw';
+rgb_output_folder = 'raw_test_output_rgb';
+
 input = dir(fullfile(folder_path, input_folder));
 filenames = {input.name}'; % get filenames
 
@@ -26,8 +27,10 @@ nodot = (cellfun('isempty', rxResult)==0); % convert to logicals
 filenames_nodot = filenames(nodot); % use logicals select filenames
 
 %% run through image() function
-for n = 1:10
+for n = 6:6
 %for n = 1:size(filenames_nodot, 1)  
+    
+    close all
     
     %% load img through bio-format
     % create file list for each file
@@ -50,7 +53,12 @@ for n = 1:10
     %% generate a binary for the whole tissue
     img_total = (img_1+img_2+img_3)./3;
     img_total = uint16(img_total);
-    if troubleshooting == 1, figure; imshow(img_total, []), end
+    if troubleshooting == 1
+        figure; 
+        imshow(img_total, []); 
+        set(gca,'FontSize', 10);
+        title('raw\_3colo\_mix');
+    end
     
     BW = imbinarize(img_total, isodata(img_total)*0.3);
     BW = bwareafilt(BW, 1,'largest');   
@@ -96,83 +104,33 @@ for n = 1:10
 
     
     %% binary operation for brain area (potential better strategy)
-    
-    bw_gray_2 = zeros(size(img_2));
-    for i = 1:20
-        method = 'Canny';
-        fudgeFactor = 0.05;    
-        [~, threshold] = edge(img_2, method);
-        edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor * i);   
-    
-        se = strel('disk',2,0);
-        edgeim_sobel_2 = imdilate(edgeim_sobel_2, se);
-    
-        bw_gray_temp = uint8(edgeim_sobel_2);
-    
-        bw_gray_2 = bw_gray_temp + uint8(bw_gray_2);
-
-    end
-
-
-    for i = 1:20
-        method = 'Roberts';
-        fudgeFactor = 0.05;    
-        [~, threshold] = edge(img_2, method);
-        edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor * i);   
-
-        se = strel('disk',2,0);
-        edgeim_sobel_2 = imdilate(edgeim_sobel_2, se);
-
-        bw_gray_temp = uint8(edgeim_sobel_2);
-
-        bw_gray_2 = bw_gray_temp + uint8(bw_gray_2);
-
-    end
-
+    bw_gray_2 = edge_merge(img_2);
     bw_gray_th_2 = im2bw(bw_gray_2, 0.1);
-
-
-    bw_gray_3 = zeros(size(img_3));
-    for i = 1:20
-        method = 'Canny';
-        fudgeFactor = 0.05;    
-        [~, threshold] = edge(img_2, method);
-        edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor * i);   
-
-        se = strel('disk',2,0);
-        edgeim_sobel_2 = imdilate(edgeim_sobel_2, se);
-
-        bw_gray_temp = uint8(edgeim_sobel_2);
-
-        bw_gray_3 = bw_gray_temp + uint8(bw_gray_3);
-
-    end
-
-
-    for i = 1:20
-        method = 'Roberts';
-        fudgeFactor = 0.05;    
-        [~, threshold] = edge(img_2, method);
-        edgeim_sobel_2 = edge(img_2, method, threshold * fudgeFactor * i);   
-
-        se = strel('disk',2,0);
-        edgeim_sobel_2 = imdilate(edgeim_sobel_2, se);
-
-        bw_gray_temp = uint8(edgeim_sobel_2);
-
-        bw_gray_3 = bw_gray_temp + uint8(bw_gray_3);
-
-    end
-
+    
+    bw_gray_3 = edge_merge(img_3);
     bw_gray_th_3 = im2bw(bw_gray_3, 0.1);
 
-    edge_merge = bitand(bw_gray_th_2, bw_gray_th_3);
-    if troubleshooting == 1, figure; imshow(edge_merge, []), end
+    bw_edgemerge = bitand(bw_gray_th_2, bw_gray_th_3);
+    
+    if troubleshooting == 1, 
+        figure; 
+        imshow(bw_edgemerge, []);
+        set(gca,'FontSize', 10);
+        title('edge\_BW');
+    end
 
     %% clean edge
-    edge_cleaned = bwareaopen(edge_merge, 500);
+    edge_cleaned = bwareaopen(bw_edgemerge, 500);
+    se = strel('disk',1,0);
+    edge_cleaned = imdilate(edge_cleaned, se);    
     edge_cleaned = imcomplement(edge_cleaned);
-    if troubleshooting == 1, figure; imshow(edge_cleaned, []), end
+    
+    if troubleshooting == 1 
+        figure
+        imshow(edge_cleaned, []);
+        set(gca,'FontSize', 10);
+        title('edge\_cleaned');
+    end
     
     %% keep biggest 20 area
     big_area = bwareafilt(edge_cleaned, 21,'largest');
@@ -188,25 +146,38 @@ for n = 1:10
     
     big_area = bwareafilt(big_area, 20,'largest');
     
+    if troubleshooting == 1 
+        figure
+        imshow(big_area, []);
+        set(gca,'FontSize', 10);
+        title('before\_statistics');
+    end
+    
+    
     %% BW statistic 
     % use a customized function "extendedproperty" for Circularity,
     % roundness and other factors for evaluation
     stats = extendedproperty(big_area);
     centroids = stats.Centroid;
+    bigarea_rgb = outlineoverlap(img_total, big_area);
     
-    if troubleshooting == 1 
-        figure; 
-        imshow(big_area, []) 
-         hold on
-        for k= 1: height(stats);
-            t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-            t.Color = 'red';
-            t.FontSize = 20;
-        end
-    hold off
+    figure; 
+    imshow(bigarea_rgb, []) 
+    set(gca,'FontSize', 10);
+    title('all\_BW\_number');
+
+    hold on
+    for k= 1: height(stats);
+        t = text(centroids(k, 1), centroids(k, 2), num2str(k));
+        t.Color = 'red';
+        t.FontSize = 20;
     end
+    hold off
     
-   
+    bw_img_file = fullfile(folder_path, bw_output_folder, filenames_nodot(n));
+    bw_img_file = char(bw_img_file);
+    fig_BW = gcf;
+    saveas(fig_BW, bw_img_file); 
     
     %% select based on eccentricity
     BW2 = bwpropfilt(big_area, 'Eccentricity', 5, 'smallest'); % select objects by their eccentricity
@@ -218,19 +189,23 @@ for n = 1:10
     se = strel('disk',2,0);
     BW2 = imdilate(BW2, se);
     
+    BW2_rgb = outlineoverlap(img_total, BW2);
+    
     if troubleshooting == 1 
         figure; 
-        imshow(BW2, []) 
-         hold on
+        imshow(BW2_rgb, []) 
+        set(gca,'FontSize', 10);
+        title('BW2\_after\_Eccentricity');
+        
+        hold on
         for k= 1: height(stats_2);
             t = text(centroids(k, 1), centroids(k, 2), num2str(k));
             t.Color = 'red';
             t.FontSize = 20;
         end
-    hold off
+        hold off
     end
-      
-    
+
     %% select based on circularity
     stats_3 = extendedproperty(BW2);
     % select the object by their circularity
@@ -245,16 +220,21 @@ for n = 1:10
     stats_3 = sortrows(stats_3, 'Circularity', 'descend');
     centroids = stats_3.Centroid;
     
+    BW3_rgb = outlineoverlap(img_total, BW3);
+    
     if troubleshooting == 1 
         figure; 
-        imshow(BW3, []) 
-         hold on
+        imshow(BW3_rgb, []) 
+        set(gca,'FontSize', 10);
+        title('BW3\_after\_Circularity\_&\_Roundness');
+        
+        hold on
         for k= 1: height(stats_3);
             t = text(centroids(k, 1), centroids(k, 2), num2str(k));
             t.Color = 'red';
             t.FontSize = 20;
         end
-    hold off
+        hold off
     end
     
     
@@ -275,46 +255,45 @@ for n = 1:10
     BW4 = ismember(L, idx);
     
     BW4 = imfill(BW4, 'holes');
-    se = strel('disk',10,0);
-    BW4 = imdilate(BW4, se);
-    se = strel('disk',4,0);
-    BW4 = imerode(BW4, se);
     
-    stats_5 = extendedproperty(BW4);
+    method = 'Canny';   
+    [~, threshold] = edge(BW4, method);
+    BW4_edgeim = edge(BW4, method, threshold, 20);  
+    se = strel('disk', 11,0);
+    BW4_edgeim = imdilate(BW4_edgeim, se);
+    BW4_edgeim = imfill(BW4_edgeim,'holes'); 
+    
+    se = strel('disk', 6, 0);
+    BW4_edgeim = imerode(BW4_edgeim, se);
+    
+    stats_5 = extendedproperty(BW4_edgeim);
     centroids = stats_5.Centroid;
     
-    if troubleshooting == 1 
-        figure; 
-        imshow(BW4, []) 
-         hold on
-        for k= 1: height(stats_4);
-            t = text(centroids(k, 1), centroids(k, 2), num2str(k));
-            t.Color = 'red';
-            t.FontSize = 20;
-        end
-    hold off
-    end
+    BW4_rgb = outlineoverlap(img_total, BW4_edgeim);
     
-    %% overlap
-    BWoutline = bwperim(BW4);
-    SegoutR = im2uint8(img_total);
-    SegoutG = im2uint8(img_total);
-    SegoutB = im2uint8(img_total);
-    SegoutR(BWoutline) = 255; 
-    SegoutG(BWoutline) = 255;
-    SegoutB(BWoutline) = 0;
-    SegoutRGB = cat(3, SegoutR, SegoutG, SegoutB);
-    figure
-    imshow(SegoutRGB, []);
+   
+    figure; 
+    imshow(BW4_rgb, []) 
+    set(gca,'FontSize', 10);
+    title('BW4\_after\_xylocation');
+
     hold on
-    
     for k= 1: height(stats_4);
         t = text(centroids(k, 1), centroids(k, 2), num2str(k));
         t.Color = 'red';
         t.FontSize = 20;
     end
-    
     hold off
     
+    rgb_img_file = fullfile(folder_path, rgb_output_folder, filenames_nodot(n));
+    rgb_img_file = char(rgb_img_file);
+    fig_BW4 = gcf;
+    saveas(fig_BW4, rgb_img_file);
+    
     impixelinfo;
+    
+
 end
+
+if troubleshooting == 0, close all; end
+

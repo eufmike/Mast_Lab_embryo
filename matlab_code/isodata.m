@@ -62,9 +62,9 @@ while abs(T(i)-T(i-1))>=1
     
     i=i+1;
     T(i)=round((MAT+MBT)/2); 
-    Threshold=T(i);
+    
 end
-
+Threshold=T(i);
  % Normalize the threshold to the range [i, 1].
 level = (Threshold - 1) / (N(end) - 1);
 
