@@ -1,14 +1,15 @@
 % By: Mike Shih
 % This is a test code for extracting the brain region from images captured by
 % Zeiss AxioScan. 
-
  
 %tic
 
-clear
+clear % remove variables
 channel_counts = 3;
 unit = round(1/3, 2);
-troubleshooting = 1;
+
+% control the status of image representation
+troubleshooting = 0;
 
 %% Define the path of folders
 folder_path = '/Users/michaelshih/Dropbox/WUCCI_dropbox/Mast_lab';
@@ -27,7 +28,7 @@ nodot = (cellfun('isempty', rxResult)==0); % convert to logicals
 filenames_nodot = filenames(nodot); % use logicals select filenames
 
 %% run through image() function
-for n = 6:6
+for n = 1:10
 %for n = 1:size(filenames_nodot, 1)  
     
     close all
@@ -51,6 +52,8 @@ for n = 6:6
     img_3 = padarray(img_3, expandsize, 0, 'both');
     
     %% generate a binary for the whole tissue
+    % the bw will be used for identifying the midline
+    
     img_total = (img_1+img_2+img_3)./3;
     img_total = uint16(img_total);
     if troubleshooting == 1
@@ -66,44 +69,14 @@ for n = 6:6
     se = strel('disk',2, 0);
     BW = imdilate(BW, se);
     
-    %imshow(BW);
     stats_total = regionprops(BW, 'BoundingBox');
     mid_x = stats_total.BoundingBox(3)/2 + stats_total.BoundingBox(1); 
     mid_y = stats_total.BoundingBox(4)/2 + stats_total.BoundingBox(2);
-    
-    %% plot image
-
-    %pos1 = [0 unit*2 unit unit];
-    %subplot('Position',pos1)
-    %imshow(img_1, []);
-
-    %pos3 = [0 unit unit unit];
-    %subplot('Position',pos3)
-    %imshow(img_2, []);
-
-    %pos5 = [0 0 unit unit];
-    %subplot('Position',pos5)
-    %imshow(img_3, []);
-
-    %% findedge in all three channel
-
-    %edgeim_1 = edge(img_1, 'canny', [0.07, 0.1], 2);
-    %pos2 = [unit unit*2 unit unit];
-    %subplot('Position',pos2);
-    %imshow(edgeim_1, [])
-
-    %edgeim_2 = edge(img_2, 'canny', [0.07, 0.1], 2);
-    %pos4 = [unit unit unit unit];
-    %subplot('Position',pos4);
-    %imshow(edgeim_2, [])
-
-    %edgeim_3 = edge(img_3, 'canny', [0.03, 0.1], 2);
-    %pos4 = [unit 0 unit unit];
-    %subplot('Position',pos4);
-    %imshow(edgeim_3, [])
-
-    
+  
     %% binary operation for brain area (potential better strategy)
+    % use the "edge_merge" function for finding edge 
+    % the function merge at least two different edge detection method
+    
     bw_gray_2 = edge_merge(img_2);
     bw_gray_th_2 = im2bw(bw_gray_2, 0.1);
     
@@ -120,6 +93,8 @@ for n = 6:6
     end
 
     %% clean edge
+    % refine edge and display
+   
     edge_cleaned = bwareaopen(bw_edgemerge, 500);
     se = strel('disk',1,0);
     edge_cleaned = imdilate(edge_cleaned, se);    
@@ -133,26 +108,59 @@ for n = 6:6
     end
     
     %% keep biggest 20 area
+    % remove the biggest area, which should be the background
+    close all;
+    
     big_area = bwareafilt(edge_cleaned, 21,'largest');
     big_area = bwareafilt(big_area, 20,'smallest');
-    
-    big_area = imfill(big_area, 'holes');
-    big_area = bwmorph(big_area,'hbreak');
-    
-    se = strel('disk',1,0);
-    big_area = imerode(big_area, se);
-    se = strel('disk',1,0);
-    big_area = imdilate(big_area, se);
-    
-    big_area = bwareafilt(big_area, 20,'largest');
     
     if troubleshooting == 1 
         figure
         imshow(big_area, []);
         set(gca,'FontSize', 10);
-        title('before\_statistics');
+        title('before\_statistics\_01');
     end
     
+    % refine BW
+    big_area = imfill(big_area, 'holes');
+    big_area = bwmorph(big_area,'hbreak');
+    se = strel('disk',2,0);
+    big_area = imerode(big_area, se);
+    
+    if troubleshooting == 1 
+        figure
+        imshow(big_area, []);
+        set(gca,'FontSize', 10);
+        title('before\_statistics\_02');
+    end
+        
+    % smooth the BW
+    method = 'Canny';   
+    [~, threshold] = edge(big_area, method);
+    big_area_edgeim = edge(big_area, method, threshold, 15);  
+    se = strel('disk', 3,0);
+    big_area_edgeim = imdilate(big_area_edgeim, se);    
+    big_area_edgeim = imfill(big_area_edgeim,'holes'); 
+    se = strel('disk', 3,0);
+    big_area_edgeim = imerode(big_area_edgeim, se);
+    
+    % big_area_edgeim = bwareafilt(big_area_edgeim, 20,'largest');
+    
+    stats_big_area_edgeim = extendedproperty(big_area_edgeim);
+    cc = bwconncomp(big_area_edgeim); 
+    idx = find([stats_big_area_edgeim.Area] > 7000);
+    L = labelmatrix(cc);
+    big_area_edgeim = ismember(L, idx);
+    
+    
+    if troubleshooting == 1 
+        figure
+        imshow(big_area_edgeim, []);
+        set(gca,'FontSize', 10);
+        title('before\_statistics\_03');
+    end
+    
+    big_area = big_area_edgeim;
     
     %% BW statistic 
     % use a customized function "extendedproperty" for Circularity,
@@ -174,6 +182,7 @@ for n = 6:6
     end
     hold off
     
+    % save the BW for review
     bw_img_file = fullfile(folder_path, bw_output_folder, filenames_nodot(n));
     bw_img_file = char(bw_img_file);
     fig_BW = gcf;
@@ -206,7 +215,7 @@ for n = 6:6
         hold off
     end
 
-    %% select based on circularity
+    %% select based on circularity and Roundness
     stats_3 = extendedproperty(BW2);
     % select the object by their circularity
     cc = bwconncomp(BW2); 
@@ -238,7 +247,9 @@ for n = 6:6
     end
     
     
-    %% select the region based on the midline
+    %% select the region based on their location
+    % use the midline of the tissue BW
+    % close all;
     stats_3.distance_mid_x = abs(stats_3.Centroid(:, 1) - mid_x);
     stats_3.distance_mid_y = abs(stats_3.Centroid(:, 2) - mid_y);
     stats_3.relative_x_1 = stats_3.BoundingBox(:, 1) - mid_x;
@@ -254,24 +265,40 @@ for n = 6:6
     L = labelmatrix(cc);
     BW4 = ismember(L, idx);
     
-    BW4 = imfill(BW4, 'holes');
+    figure; 
+    imshow(BW4, []) 
+    set(gca,'FontSize', 10);
+    title('BW4\_after\_xylocation\_01');
     
+    % smooth the BW
     method = 'Canny';   
     [~, threshold] = edge(BW4, method);
-    BW4_edgeim = edge(BW4, method, threshold, 20);  
-    se = strel('disk', 11,0);
+    BW4_edgeim = edge(BW4, method, threshold, 30);
+    
+    stats_BW4_edgeim = extendedproperty(BW4_edgeim);
+    cc = bwconncomp(BW4_edgeim); 
+    idx = find([stats_BW4_edgeim.Area] > 5);
+    L = labelmatrix(cc);
+    BW4_edgeim = ismember(L, idx);
+    
+    figure; 
+    imshow(BW4_edgeim, []) 
+    set(gca,'FontSize', 10);
+    title('BW4\_after\_xylocation\_02');
+    
+    se = strel('disk', 3,0);
     BW4_edgeim = imdilate(BW4_edgeim, se);
     BW4_edgeim = imfill(BW4_edgeim,'holes'); 
-    
-    se = strel('disk', 6, 0);
+    se = strel('disk', 1, 0);
     BW4_edgeim = imerode(BW4_edgeim, se);
+    se = strel('disk', 8, 0);
+    BW4_edgeim = imdilate(BW4_edgeim, se);
     
     stats_5 = extendedproperty(BW4_edgeim);
     centroids = stats_5.Centroid;
     
     BW4_rgb = outlineoverlap(img_total, BW4_edgeim);
     
-   
     figure; 
     imshow(BW4_rgb, []) 
     set(gca,'FontSize', 10);
@@ -285,6 +312,7 @@ for n = 6:6
     end
     hold off
     
+    % save the BW for review
     rgb_img_file = fullfile(folder_path, rgb_output_folder, filenames_nodot(n));
     rgb_img_file = char(rgb_img_file);
     fig_BW4 = gcf;
