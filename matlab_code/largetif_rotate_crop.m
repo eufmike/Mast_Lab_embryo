@@ -52,7 +52,7 @@ for n = 1:size(filenames_nodot, 1)
     
     %% crop the image
     
-    stats = regionprops(BW, 'BoundingBox');
+    stats = regionprops('table', BW, 'BoundingBox');
     BW_crop = imcrop(BW, stats.BoundingBox);
     img_1_crop = imcrop(img_1_seg, stats.BoundingBox);
     img_2_crop = imcrop(img_2_seg, stats.BoundingBox);
