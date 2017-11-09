@@ -15,7 +15,7 @@ filenames = {input.name}'; % get filenames
 regexp_crit = '^[^.]+'; % the pattern of general expression
 rxResult = regexp(filenames, regexp_crit); % pick the string follow the rule
 nodot = (cellfun('isempty', rxResult)==0); % convert to logicals
-filenames_nodot = filenames(nodot); % use logicals select filenames
+filenames_nodot = removethumb(nofilenamesdot); % use logicals select filenames
 
 %% Initiate parfor (idle)
 % ver distcomp

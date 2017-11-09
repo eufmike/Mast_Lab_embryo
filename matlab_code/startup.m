@@ -8,9 +8,5 @@
 %   Copyright 1984-2000 The MathWorks, Inc. 
 
 %load matlab.mat
-addpath('/Applications/MATLAB_R2016a.app/toolbox/bfmatlab')
-addpath('/Applications/MATLAB_R2016a.app/toolbox/kovesi')
-addpath('/Applications/MATLAB_R2016a.app/toolbox/isodata')
-addpath('/Applications/MATLAB_R2016a.app/toolbox/saveastiff_4')
-addpath('/Applications/MATLAB_R2016a.app/toolbox/grs2rgb')
+addpath(genpath('/Users/michaelshih/Documents/MATLAB/matlab_toolbox'));
 
