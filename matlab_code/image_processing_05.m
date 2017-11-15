@@ -85,7 +85,7 @@ for n = 21:150
     % use thresholding strategy for defining DAPI positive region
     figure
     imshow(img_1, []);
-    BW_DAPI = imbinarize(img_total, isodata(img_total)*0.5);
+    BW_DAPI = imbinarize(img_total, isodata(img_total)*0.5); % this is wrong!!!!!
     figure
     imshow(BW_DAPI, []);
     
