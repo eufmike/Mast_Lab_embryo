@@ -23,9 +23,9 @@ stats_raw_folder = 'stats_raw';
 stats_smooth_folder = 'stats_smooth';
 
 input = dir(fullfile(folder_path, input_folder));
-filenames = {input.name}'; % get filenames
+filenames = {input.name}; % get filenames
 
-%% Remove hidden files (any filenames start with ".").  
+%% Remove hidden files (any filenames start with ".") 
 regexp_crit = '^[^.]+'; % the pattern of general expression
 rxResult = regexp(filenames, regexp_crit); % pick the string follow the rule
 nodot = (cellfun('isempty', rxResult)==0); % convert to logicals
